@@ -134,11 +134,6 @@ func SearchBook() gin.HandlerFunc {
 		authorName := ctx.Query("authorName")
 		categoryName := ctx.Query("categoryName")
 
-		if bookName == "" && authorName == "" && categoryName == "" {
-			ctx.JSON(http.StatusBadRequest, gin.H{"message": "At least one search query is required"})
-			return
-		}
-
 		filter := bson.M{}
 		if bookName != "" {
 			filter["book_name"] = bson.M{"$regex": "^" + bookName, "$options": "i"}
@@ -290,10 +285,11 @@ func ReturnBook() gin.HandlerFunc {
 func GetMostBorrowedBooks() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		type MostBorrowedBook struct {
-			BookID        bson.ObjectID `json:"book_id" bson:"_id"`
-			Title         string        `json:"title" bson:"title"`
-			Author        string        `json:"author" bson:"author"`
-			BorrowedCount int           `json:"borrowed_count" bson:"borrowed_count"`
+			BookID        bson.ObjectID `json:"book_id"`
+			BookName      string        `json:"book_name"`
+			Author        string        `json:"author"`
+			Category      string        `json:"category"`
+			BorrowedCount int           `json:"borrowed_count"`
 		}
 		borrowRecords := database.Get().Database.Collection("borrow_records")
 		books := database.Get().Database.Collection("books")
@@ -314,7 +310,7 @@ func GetMostBorrowedBooks() gin.HandlerFunc {
 		}
 
 		defer cursor.Close(ctx)
-		var mostBorrowed []MostBorrowedBook
+		mostBorrowed := make([]MostBorrowedBook, 0)
 
 		for cursor.Next(ctx) {
 			var record struct {
@@ -326,11 +322,7 @@ func GetMostBorrowedBooks() gin.HandlerFunc {
 				continue
 			}
 
-			var book struct {
-				BookName string `bson:"book_name"`
-				Author   string `bson:"author"`
-				Category string `bson:"category"`
-			}
+			var book models.Book
 			err := books.FindOne(ctx, bson.M{"_id": record.BookID}).Decode(&book)
 			if err != nil {
 				log.Println("Error fetching book details:", err)
@@ -339,12 +331,13 @@ func GetMostBorrowedBooks() gin.HandlerFunc {
 
 			mostBorrowed = append(mostBorrowed, MostBorrowedBook{
 				BookID:        record.BookID,
-				Title:         book.BookName,
-				Author:        book.Author,
+				BookName:      *book.BookName,
+				Author:        *book.Author,
+				Category:      *book.Category,
 				BorrowedCount: record.BorrowedCount,
 			})
 		}
 
-		ctx.JSON(http.StatusOK, mostBorrowed)
+		ctx.JSON(http.StatusOK, gin.H{"books": mostBorrowed})
 	}
 }
