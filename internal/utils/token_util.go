@@ -1,11 +1,12 @@
 package utils
 
 import (
-	"github.com/KasiditR/forviz-backend-api-test/internal/config"
-	jwt "github.com/dgrijalva/jwt-go"
 	"log"
 	"strings"
 	"time"
+
+	"github.com/KasiditR/forviz-backend-api-test/internal/config"
+	jwt "github.com/dgrijalva/jwt-go"
 )
 
 type SignedDetails struct {
@@ -44,12 +45,21 @@ func TokenGenerator(id string, username string) (signedToken string, signedRefre
 	return token, refreshToken, err
 }
 
-func ValidateToken(signedToken string) (claims *SignedDetails, msg string) {
+func ValidateAccessToken(signedToken string) (claims *SignedDetails, msg string) {
 
+	return validateToken(signedToken, ACCESS_TOKEN_SECRET)
+}
+
+func ValidateRefreshToken(signedToken string) (claims *SignedDetails, msg string) {
+
+	return validateToken(signedToken, REFRESh_TOKEN_SECRET)
+}
+
+func validateToken(signedToken string, tokenSecret string) (claims *SignedDetails, msg string) {
 	signedToken = strings.TrimPrefix(signedToken, "Bearer ")
 
 	token, err := jwt.ParseWithClaims(signedToken, &SignedDetails{}, func(t *jwt.Token) (interface{}, error) {
-		return []byte(ACCESS_TOKEN_SECRET), nil
+		return []byte(tokenSecret), nil
 	})
 
 	if err != nil {

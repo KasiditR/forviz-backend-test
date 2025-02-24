@@ -1,12 +1,13 @@
 package handlers
 
 import (
+	"net/http"
+
 	"github.com/KasiditR/forviz-backend-api-test/internal/database"
 	"github.com/KasiditR/forviz-backend-api-test/internal/models"
 	"github.com/KasiditR/forviz-backend-api-test/internal/utils"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/v2/bson"
-	"net/http"
 )
 
 func Register() gin.HandlerFunc {
@@ -80,5 +81,32 @@ func Login() gin.HandlerFunc {
 			"refreshToken": refreshToken,
 			"user_id":      user.ID.Hex(),
 		})
+	}
+}
+
+func RefreshToken() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var refreshTokenRequest struct {
+			RefreshToken string `json:"refreshToken"`
+		}
+
+		if err := ctx.ShouldBindJSON(&refreshTokenRequest); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+			return
+		}
+
+		payload, msg := utils.ValidateRefreshToken(refreshTokenRequest.RefreshToken)
+		if msg != "" {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"message": msg})
+			return
+		}
+
+		token, _, err := utils.TokenGenerator(payload.ID, payload.UserName)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{"accessToken": token})
 	}
 }

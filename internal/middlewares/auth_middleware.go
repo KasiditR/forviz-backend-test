@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"net/http"
+
 	"github.com/KasiditR/forviz-backend-api-test/internal/utils"
 	"github.com/gin-gonic/gin"
 )
@@ -15,7 +16,7 @@ func Authentication() gin.HandlerFunc {
 			return
 		}
 
-		claims, msg := utils.ValidateToken(clientToken)
+		claims, msg := utils.ValidateAccessToken(clientToken)
 		if msg != "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"message": msg})
 			c.Abort()
