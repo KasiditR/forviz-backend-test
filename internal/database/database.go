@@ -28,15 +28,14 @@ var (
 func ConnectDatabase() {
 	ctx, cancel := context.WithTimeout(context.Background(), LongWaitTime*time.Second)
 	defer cancel()
-
 	clientOptions := options.Client().ApplyURI(config.LoadConfig().MongoURI)
 	_mongo.client, _mongo.Err = mongo.Connect(clientOptions)
 	if _mongo.Err != nil {
-		panic(_mongo.Err)
+		log.Fatalf("Failed to connect to MongoDB: %v", _mongo.Err)
 	}
 
 	if err := _mongo.client.Ping(ctx, readpref.Primary()); err != nil {
-		panic(_mongo.Err)
+		log.Fatalf("MongoDB is not reachable: %v", err)
 	}
 
 	_mongo.Database = _mongo.client.Database(config.LoadConfig().MongoDatabase)

@@ -21,8 +21,8 @@ func LoadConfig() *ConfigEnv {
 	}
 	return &ConfigEnv{
 		Port:               getEnv("PORT", "3000"),
-		MongoURI:           getEnv("MONGO_URI", ""),
-		MongoDatabase:      getEnv("MONGO_DATABASE", ""),
+		MongoURI:           getEnv("MONGO_URI", "mongodb://development:testpassword@localhost:27017/"),
+		MongoDatabase:      getEnv("MONGO_DATABASE", "forviz-book"),
 		AccessTokenSecret:  getEnv("ACCESS_TOKEN_SECRET", ""),
 		RefreshTokenSecret: getEnv("REFRESH_TOKEN_SECRET", ""),
 	}
